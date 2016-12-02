@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+{{ include('layout/head.twig') }}
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">Blog</span>
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                <a class="mdl-navigation__link" href="/blog/">Home</a>
+            </nav>
+        </div>
+    </header>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            <div class="mdl-grid" id="posts">
+
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+    function getContent() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/post/api/v1/', true);
+        xhr.send();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                console.dir(xhr.responseText);
+                var data = xhr.responseText;
+            } else if (xhr.readyState == 4) {
+                var data = xhr.responseText;
+            }
+        }
+    }
+
+    function httpGet(url) {
+        return new Promise(function(resolve, reject) {
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onload = function() {
+                if (this.status != 500) {
+                    resolve({statusCode:this.status, data: this.response});
+                } else {
+                    let error = new Error(this.statusText);
+                    error.code = this.status;
+                    reject(error);
+                }
+            };
+            xhr.onerror = function() {
+                reject(new Error("Network Error"));
+            };
+            xhr.send();
+        });
+    }
+    function parseData(backpack){
+        return new Promise(function(resolve, reject) {
+            backpack.data = JSON.parse(backpack.data);
+            resolve(backpack);
+        });
+    }
+    function addPostsToPage(backpack){
+        return new Promise(function(resolve, reject){
+            for (let i = 0; i < backpack.data.length; i++) {
+                let post = document.createElement('div');
+                post.className = 'mdl-cell mdl-cell--11-col mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-card mdl-shadow--6dp';
+                let titel = document.createElement('div');
+                titel.className = 'mdl-card__title';
+                titel.innerHTML = backpack.data[i].title;
+                let body = document.createElement('div');
+                body.className = 'mdl-card__supporting-text';
+                body.innerHTML = backpack.data[i].body;
+                let border = document.createElement('div');
+                border.className = 'mdl-card__actions mdl-card--border';
+                post.appendChild(titel);
+                post.appendChild(body);
+                post.appendChild(border);
+                posts.appendChild(post);
+            }
+
+            resolve(backpack);
+        });
+    }
+    httpGet("/post/api/v1/")
+        .then(parseData)
+        .then(addPostsToPage)
+        .then(
+                    response => console.dir(response),
+                    error => console.dir(error)
+        );
+</script>
+</body>
+</html>

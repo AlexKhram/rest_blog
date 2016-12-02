@@ -9,7 +9,7 @@ require_once __DIR__.'/../app/config.php';
 
 $app = new Silex\Application();
 
-$app['debug'] = false;
+$app['debug'] = true;
 
 
 // handling json request
@@ -24,9 +24,20 @@ $app->before(function (Request $request) {
 $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => $dbParams
 ));
+$app->register(new Silex\Provider\TwigServiceProvider(), array(
+    'twig.path' => __DIR__.'/../app/src/AlexKhram/View',
+));
 
 // models
 $app['modelPost'] = new \AlexKhram\Model\Post($app);
+
+//routing
+
+//blog
+$blog = $app['controllers_factory'];
+$blog->get('/', "AlexKhram\\Controller\\BlogController::index");
+$blog->get('/{postId}', "AlexKhram\\Controller\\BlogController::post");
+$app->mount('/blog', $blog);
 
 // post api
 $postApiV1 = $app['controllers_factory'];
@@ -38,14 +49,14 @@ $postApiV1->delete('/{postId}', "AlexKhram\\Controller\\PostController::deletePo
 $app->mount('/post/api/v1', $postApiV1);
 
 // errors handling
-$app->error(function (\Exception $e, Request $request, $code) use ($app) {
-    switch ($code) {
-        case 404:
-            return $app->json(['error'=>'Page not found'], 404);
-        default:
-            return $app->json(['error'=>'Something went wrong'], 500);
-    }
-});
+//$app->error(function (\Exception $e, Request $request, $code) use ($app) {
+//    switch ($code) {
+//        case 404:
+//            return $app->json(['error'=>'Page not found'], 404);
+//        default:
+//            return $app->json(['error'=>'Something went wrong'], 500);
+//    }
+//});
 
 $app->run();
 
